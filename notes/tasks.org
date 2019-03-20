@@ -1,0 +1,4 @@
+* Tasks
+    * [TODO] Make jamf-versioner package available in GitHub.
+    * [TODO] Make AutoPkg recipe for jamf-versioner.
+    * [TODO] Description on how to make a valid custom Extension Attribute.

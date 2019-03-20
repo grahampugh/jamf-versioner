@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<computer_extension_attribute>
+    <name>%NAME% Version</name>
+    <description />
+    <data_type>String</data_type>
+    <input_type>
+        <type>script</type>
+        <platform>Mac</platform>
+        <script>#!/usr/bin/python
+
+'''
+An Extension Attribute that uses Munki's core tools to
+compare the installed version of an application
+with the last version installed by Jamf
+'''
+
+import sys
+
+versioner_path = '/usr/local/munki/versioner'
+sys.path.append(versioner_path)
+from write_version_to_json_file import write_to_json
+from jamf_versioner import ext_att_output
+
+### INPUTS
+policy_name = '%PROD_NAME%'
+version_check_type = '%VERSIONER_TYPE%' # app or pkg or script
+app_path = '%VERSIONER_APP_PATH%'
+app_key = '%VERSIONER_APP_KEY%'
+pkgid = '%PKGID%'
+jamf_test_version = '%version%'
+jamf_current_version = '0.0.0'
+### END INPUTS
+
+# set defaults if not supplied from AutoPkg
+if '%' in version_check_type:
+    version_check_type = 'app'
+if '%' in app_path:
+    app_path = '/Applications/{}.app'.format(policy_name)
+if '%' in app_key:
+    app_key = 'CFBundleShortVersionString'
+if '%' in pkgid:
+    pkgid = ''
+
+# write to json_file
+write_to_json(policy_name, version_check_type, app_path, app_key, pkgid, jamf_test_version, 'untested')
+if jamf_current_version != '0.0.0':
+    write_to_json(policy_name, version_check_type, app_path, app_key, pkgid, jamf_current_version, 'current')
+
+# write out EA
+output = ext_att_output(policy_name)
+print "&lt;result&gt;{}&lt;/result&gt;".format(output)</script>
+    </input_type>
+    <inventory_display>Extension Attributes</inventory_display>
+    <recon_display>Extension Attributes</recon_display>
+</computer_extension_attribute>
