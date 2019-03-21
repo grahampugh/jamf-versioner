@@ -15,6 +15,7 @@ import json
 munkitools_path = '/usr/local/munki'
 sys.path.append(munkitools_path)
 from munkilib import pkgutils
+# from munkilib import FoundationPlist
 
 
 def compare_versions(local, jamf, version):
@@ -36,7 +37,7 @@ def compare_versions(local, jamf, version):
     return latest, highest_version
 
 
-def ext_att_output(policy_name):
+def ext_att_output(policy_name, script_version=None):
     '''supplies values to compare local versions with current and untested
     versions on Jamf. Returns a composite EA value'''
 
@@ -79,16 +80,24 @@ def ext_att_output(policy_name):
         jamf_current_version = info[policy_name]['jamf_current_version']
         print "jamf_current_version: {}".format(jamf_current_version) # temp
     except KeyError:
-        jamf_current_version = "0.0.0"
+        # we set a current version of more than zero but less
+        # than any feasible real version number so that we can
+        # compare
+        jamf_current_version = "0.0.0.0.1"
 
     if version_check_type == "app":
         # get installed app version
-        if app_path.endswith('.app') or app_path.endswith('.plugin'):
+        if app_path.endswith('.app') or app_path.endswith('.plugin') or app_path.endswith('/Current'):
             # this function automatically adds Contents/Info.plist to the path
             local_version = pkgutils.getBundleVersion(app_path, app_key)
-        else:
+        # else:
             # this function requires full path to the plist
-            local_version = pkgutils.getVersionString(app_path, app_key)
+            # and the FoundationPlist module
+            # leaving it commented out until/unless we need it
+            # if os.path.exists(app_path):
+            #     try:
+            #         plist = FoundationPlist.readPlist(app_path)
+            #         local_version = pkgutils.getVersionString(plist, app_key)
         if not local_version:
             local_version = "0.0.0"
         print "app version: {}".format(local_version) # temp
@@ -101,6 +110,8 @@ def ext_att_output(policy_name):
     elif version_check_type == "script":
         # the version will be passed from the extension attribute in this case
         local_version = script_version
+        if not local_version:
+            local_version = "0.0.0"
     # compare local with current
     latest_v_current, highest_version = compare_versions(
         local_version, jamf_current_version, 'current'
@@ -111,5 +122,5 @@ def ext_att_output(policy_name):
         local_version, jamf_test_version, 'untested'
     )
 
-    output = "{},{}".format(latest_v_current, latest_v_untested)
+    output = "{},{},{}".format(local_version,latest_v_current, latest_v_untested)
     return output
