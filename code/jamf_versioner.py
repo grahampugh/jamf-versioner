@@ -21,9 +21,9 @@ from munkilib import pkgutils
 def compare_versions(local, jamf, version):
     '''compare local version to jamf versions stored in
     json file. Returns one of:
-    <current or <untested
+    -current or -untested
     =current or =untested
-    >current or >untested
+    +current or +untested
     '''
     latest = '+{}'.format(version)
     highest_version = local
@@ -37,7 +37,7 @@ def compare_versions(local, jamf, version):
     return latest, highest_version
 
 
-def ext_att_output(policy_name, script_version=None):
+def ext_att_output(policy_name):
     '''supplies values to compare local versions with current and untested
     versions on Jamf. Returns a composite EA value'''
 
@@ -69,7 +69,7 @@ def ext_att_output(policy_name, script_version=None):
     if info[policy_name]['script_version']:
         script_version = info[policy_name]['script_version']
     else:
-        script_version = '0.0.0'
+        script_version = '0'
 
     # greb the test version
     jamf_test_version = info[policy_name]['jamf_test_version']
@@ -82,7 +82,8 @@ def ext_att_output(policy_name, script_version=None):
     except KeyError:
         # we set a current version of more than zero but less
         # than any feasible real version number so that we can
-        # compare
+        # compare - may need to check if something like R2018
+        # appears as less than this
         jamf_current_version = "0.0.0.0.1"
 
     if version_check_type == "app":
@@ -90,28 +91,20 @@ def ext_att_output(policy_name, script_version=None):
         if app_path.endswith('.app') or app_path.endswith('.plugin') or app_path.endswith('/Current'):
             # this function automatically adds Contents/Info.plist to the path
             local_version = pkgutils.getBundleVersion(app_path, app_key)
-        # else:
-            # this function requires full path to the plist
-            # and the FoundationPlist module
-            # leaving it commented out until/unless we need it
-            # if os.path.exists(app_path):
-            #     try:
-            #         plist = FoundationPlist.readPlist(app_path)
-            #         local_version = pkgutils.getVersionString(plist, app_key)
         if not local_version:
-            local_version = "0.0.0"
+            local_version = "0"
         print "app version: {}".format(local_version) # temp
     elif version_check_type == "pkg":
         # get last version installed from pkg
         local_version = pkgutils.getInstalledPackageVersion(pkgid)
         if not local_version:
-            local_version = "0.0.0"
+            local_version = "0"
         print "pkg version: {}".format(local_version) # temp
     elif version_check_type == "script":
         # the version will be passed from the extension attribute in this case
         local_version = script_version
         if not local_version:
-            local_version = "0.0.0"
+            local_version = "0"
     # compare local with current
     latest_v_current, highest_version = compare_versions(
         local_version, jamf_current_version, 'current'
